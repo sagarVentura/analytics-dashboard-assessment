@@ -1,0 +1,318 @@
+html {
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+  
+  .table-container {
+    /* border: 1px solid lightgray; */
+    overflow-x: scroll;
+    /* width: 100%; */
+    /* max-width: 960px; */
+    /* position: relative; */
+  }
+  
+  table {
+    /* box-shadow and borders will not work with positon: sticky otherwise */
+    border-collapse: separate !important;
+    border-spacing: 0;
+  }
+  
+  th {
+    /* background-color: lightgray;
+    border-bottom: 1px solid lightgray;
+    font-weight: bold; */
+    height: 30px;
+    position: relative;
+    text-align: center;
+  }
+  
+  td {
+    /* padding: 2px 4px; */
+  }
+  
+  .resizer {
+    /* background: rgba(0, 0, 0, 0.5); */
+    background-color: white;
+    cursor: col-resize;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    touch-action: none;
+    user-select: none;
+    width: 5px;
+  }
+  
+  .resizer.isResizing {
+    background: blue;
+    opacity: 1;
+  }
+  
+  html {
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+  
+  table {
+    border: 1px solid lightgray;
+  }
+  
+  tbody {
+    border-bottom: 1px solid lightgray;
+  }
+  
+  th {
+    /* border-bottom: 1px solid lightgray;
+    border-right: 1px solid lightgray; */
+    /* padding: 2px 4px !important; */
+    text-align: center;
+    color: #4B4B4B;
+  }
+  
+  th div {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  
+  th button {
+    padding: 1rem;
+    cursor: grab;
+    font-size: 1rem;
+  }
+  
+  td {
+    /* border-right: 1px solid lightgray !important; */
+    padding: 4px 4px; 
+
+  }
+  
+  td:last-child {
+    border-right: 0;
+  }
+  
+  tfoot {
+  }
+  
+  tfoot th {
+    font-weight: normal;
+  }
+  
+
+ 
+
+  .chevron, .tableButton{
+    background: transparent;
+    border: none;
+
+  }
+
+  .chevron{
+
+    cursor: pointer;
+  }
+  .tableButton:hover{
+    cursor: move;
+ }
+
+ .point-move:hover{
+  cursor: move;
+ }
+
+    tr td{
+    font-size: 1rem;
+  }
+
+  .custom-datepicker-input {
+    width: 100%;
+    padding-left: 5px;
+  }
+  
+  .custom-datepicker-popper {
+    z-index: 1050 !important; /* Ensure it's on top of other content */
+  }
+
+  .TaskList .custom-datepicker-input{
+    font-weight: 600;
+    
+  }
+  
+  .datePicker {
+    position: relative;
+    z-index: 1000; /* Ensure the input is above other content */
+  }
+
+ 
+  
+.parentdiv{
+  height: 15px;
+  width: 80%;
+  background-color: #ebebeb;
+   border-radius:5%;
+   position: relative;
+
+}
+
+.childdiv{
+  height: 100%;
+background-color: #88d37c;
+border-radius:5%;
+text-align: right;
+display:flex;
+align-items:center;
+justify-content:flex-end;
+}
+
+.progresstext{
+  padding: 10;
+  color: black;
+  font-weight: 500;
+   font-size:10px;
+   position: absolute;
+   right: 50%;
+}
+
+.center-align{
+  display: flex;
+  justify-content: center;
+  align-items:center;
+}
+
+.cursor-not-allow{
+  cursor: not-allowed;
+}
+
+.cursor-pointer{
+  cursor: pointer;
+}
+
+.header{
+  display: flex;
+  flex-direction: column;
+  gap:3px;
+  justify-content: center;
+  align-items: center;
+  color: #4B4B4B;
+  font-weight: 500;
+  font-size: medium;
+}
+ .h-100{
+  height: 100%;
+ }
+ .color-white{
+color: white;
+ }
+ .background{
+  background-color: white;
+ }
+
+ td, th {
+  position: relative;
+  z-index: 1;
+
+}
+
+th ,td,tr {
+  border:.5px solid #9CA38F;
+}
+td{
+  color: white;
+  background-color:#202124;
+}
+td, th {
+  position: relative;
+  overflow: scroll; /*Ensures the content is not clipped/*
+  z-index: 0; /* Ensure z-index is lower than the absolutely positioned element */
+}
+
+
+
+.taskList{
+  font-size: 16px !important; 
+  font-family: 'Roboto-Bold';
+  /* display: flex;
+  justify-content: center;
+  align-items: center; */
+}
+
+.taskBgColor{
+  background-color:#FFFFFF ;
+}
+
+
+.task{
+  font-size: 15px !important;  
+}
+.task:hover{
+  background-color: #F7F7F7 !important;
+}
+
+.table-row {
+  position: relative;
+  z-index: 1;
+  overflow: visible; /* Ensure this is set to visible */
+}
+
+.absolute-dropdown {
+  position: absolute;
+  z-index: 10; /* Higher than table cells */
+  overflow: visible;
+}
+
+.color-lightOrg{
+  background-color: #fff7f4;
+}
+
+.hover-option:hover{
+  background-color: #fff7f4;
+  color:#ff6f13
+}
+
+.css-1fdsijx-ValueContainer{
+  display: flex !important;
+  justify-content: flex-start;
+  flex:none
+}
+
+th{
+  /* padding-inline: 30px !important; */
+  margin: 0px !important;
+}
+
+.table-container {
+  width: var(--main-width) !important; /* Ensure table width is responsive */
+ /* Prevent table from growing beyond its container */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
+}
+
+
+th ,tr , td{
+  box-sizing: border-box !important;
+
+}
+
+.taskList{
+  font-family: 'Arial-Rounded';
+
+}
+
+
+tr{
+  height: 50px !important; 
+ }
+
+
+ .taskList {
+  white-space: nowrap;        /* Prevents text from wrapping to the next line */
+  overflow: hidden;           /* Ensures that content that overflows will be hidden */
+  text-overflow: ellipsis;    /* Adds the "..." when text overflows */
+
+}
+
+.hover-task:hover{
+  background-color: #F7F7F7 !important;
+}
+
+
+
+
