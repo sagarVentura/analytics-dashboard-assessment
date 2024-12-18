@@ -1,3 +1,5 @@
+import App from "./component/TableFilter";
+
 const { createBrowserRouter } = require("react-router-dom");
 const { default: Landing } = require("./Landing");
 const { default: Table } = require("./component/Table");
@@ -9,7 +11,11 @@ const Routes=createBrowserRouter([
         children:[
             {
            path:"/",
-        element:<Table/>,
+        element:<App/>,
+            },
+            {
+                path:"/graph",
+                element:<Table/>
             }
         ]
         

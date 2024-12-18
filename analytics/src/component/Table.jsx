@@ -6,6 +6,8 @@ import ReactDOM from 'react-dom';
 import {
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table'
 import './Table.css'
@@ -53,6 +55,21 @@ const getCommonPinningStyles = (column) => {
     };
 };
 
+const getCommonPinningStylesForHeader = (column) => {
+    const isPinned = column.getIsPinned();
+
+    return {
+        left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
+        right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
+        top: '0px',
+        position: isPinned ? 'sticky' : 'sticky',
+        zIndex: isPinned ? 4 : 0,
+        width: `${column.getSize()}px`, // Add this to ensure pinned column width matches
+        minWidth: `${column.getSize()}px`, // Ensures the pinned column does not shrink
+        // maxWidth: `${column.getSize()}px`, // Ensures the pinned column does not grow
+    };
+};
+
 
 
 
@@ -60,17 +77,21 @@ const getCommonPinningStyles = (column) => {
 
 function Table() {
     const [data, setData] = React.useState([]);
-    const [allData,setAllData]=useState()
+    const [allData, setAllData] = useState()
     const [loading, setLoading] = React.useState(true);
-    const[filter,setFilter]=useState({});
-    const [rowsPerPage,setRowPerPage]=useState(10);
-    const [currentPage,setCurrentPage]=useState(1);
-    const[totalPages,settotalPages]=useState(1)
+    const [filter, setFilter] = useState({});
+    const [rowsPerPage, setRowPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, settotalPages] = useState(1);
+    const [columnFilters, setColumnFilters] = React.useState([]);
 
+
+    console.log("rendring")
     const [header, setHeader] = React.useState([]);
 
     const [pageError, setPageError] = useState(null);
-    const [pinnedColumn, setPinnedColumn] = useState([])
+    const [pinnedColumn, setPinnedColumn] = useState([]);
+    const [rowOrder,setRowOrder]=useState([])
 
 
 
@@ -84,9 +105,21 @@ function Table() {
             try {
                 const response = await getData();
                 setData(response.slice(0, rowsPerPage));
+                setRowOrder(()=>{
+                    let pushArr=[]
+                    response.slice(0, rowsPerPage).forEach((ele)=>{
+                        pushArr.push(ele[`VIN (1-10)`]
+                    )
+
+                    })
+                    return pushArr;
+
+                }
+                )
                 setAllData(response);
-                settotalPages(()=>{
-                    return response?Math.ceil((response.length)/rowsPerPage):1})
+                settotalPages(() => {
+                    return response ? Math.ceil((response.length) / rowsPerPage) : 1
+                })
                 let header = Object.keys(response[0]);
                 setHeader(header);
                 setPinnedColumn(header.slice(0, 2))
@@ -102,22 +135,32 @@ function Table() {
         fetchData();
     }, []);
 
-    useEffect(()=>{
-        if(!allData)  return ;
-         setData(
-            ()=>{
-              return   allData.slice(((currentPage-1)*rowsPerPage),currentPage*rowsPerPage)
+    useEffect(() => {
+        if (!allData) return;
+        setData(
+            () => {
+                return allData.slice(((currentPage - 1) * rowsPerPage), currentPage * rowsPerPage)
             }
         )
 
-    },[currentPage])
+    }, [currentPage])
 
 
 
 
-    const Cell = ({ field }) => {
+    const Cell = ({data, field,Key }) => {
+        const { attributes, listeners } = useSortable({
+            id: data[`VIN (1-10)`],
 
-        return <span className='text-white text-lg'>{field}</span>
+        })
+
+        return(    <div {... attributes} {...listeners }>
+               {Key=="VIN (1-10)" && <div {...attributes} {...listeners} className='point-move' >
+                        {<DragIcon /> }
+                    </div>}
+             <span className='text-white text-lg'>{field}</span>
+        </div>
+        )
 
 
     }
@@ -148,28 +191,9 @@ function Table() {
 
 
         return columnArr
-    }, [header,filter,data]);
+    }, [header,rowOrder]);
 
-    function handleSearch(header,text){
-        // if(text?.trim()==""){
-        //     return;
-        // }
-        setFilter((filter)=>{
-            let obj= {
-                   ...filter,
-                  [header]:text
-               }
-               return obj
-;           })
-        setData(()=>{
-           
-         let data=   allData.filter((data)=>{
-                return data?.[header].toLowerCase().includes(text.toLowerCase())
-            })
-            return data?.length??[{}]
-    })
-
-    }
+  
 
 
 
@@ -177,32 +201,20 @@ function Table() {
         let IconRender = Icon;
         const { attributes, listeners } = useSortable({
             id: id,
-            
+
         })
         return (
             <div className=' header cursor-default'  >
                 <div className='flex justify-center'>
-                <div {...attributes} {...listeners}  className='point-move' >
-                <DragIcon />
-                </div>
-                {IconRender && <IconRender width={'15px'} height={"15px"} />}
-                <div className='
+                    <div {...attributes} {...listeners} className='point-move' >
+                        {!pinnedColumn.includes(id) ? <DragIcon /> : null}
+                    </div>
+                    {IconRender && <IconRender width={'15px'} height={"15px"} />}
+                    <div className='
                   text-sky-400  font-bold px-2
                 '  style={{ marginLeft: "5px" }}>{header}</div>
+                </div>
             </div>
-            {/* <div className='flex justify-center'>
-             <input
-             type="text"
-             placeholder={`${header}`}
-             className="mt-2 block bg-black border text-sky-300 border-gray-700 rounded-md p-1 shadow-sm outline-none w-[50%]"
-          value={filter?.[header]??null}
-        
-         onChange={(e) =>
-            { 
-                handleSearch(header, e.target.value)}}
-           />
-           </div> */}
-           </div>
         )
 
     }
@@ -213,18 +225,20 @@ function Table() {
 
 
     const table = useReactTable({
-      data:  data??[{}],
+        data: data ?? [{}],
         columns: testcolumn,
-        getCoreRowModel: getCoreRowModel(),
-        initialState: {
-            expanded: true, //expand all rows by default
+        filterFns: {},
+        state: {
+          columnFilters,
         },
-        getSubRows: row => row.task,
+        onColumnFiltersChange: setColumnFilters,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(), //client side filtering
+        getSortedRowModel: getSortedRowModel(),
         getRowId: row => row.id, //required because row indexes will change
-
         debugTable: true,
         debugHeaders: true,
-        debugColumns: true,
+        debugColumns: false,
         columnResizeMode: 'onChange', // Enable column resizing
     },
         {
@@ -250,11 +264,11 @@ function Table() {
             if (activeRow != overRow) return;
             //   it for   order the columns according to drag and drop 
             // if (active?.data?.current?.type == "header" || over?.data?.current?.type == "header") {
-                setHeader(header => {
-                    const oldIndex = header.indexOf(active.id);
-                    const newIndex = header.indexOf(over.id);
-                    return arrayMove(header, oldIndex, newIndex) //this is just a splice util
-                })
+            setHeader(header => {
+                const oldIndex = header.indexOf(active.id);
+                const newIndex = header.indexOf(over.id);
+                return arrayMove(header, oldIndex, newIndex) //this is just a splice util
+            })
             // }
 
         }
@@ -278,8 +292,8 @@ function Table() {
     const DragAlongCell = ({ cell }) => {
         const { isDragging, setNodeRef, transform } = useSortable({
             id: cell.column.id,
-            data:{
-                type:"header"
+            data: {
+                type: "header"
             }
         })
 
@@ -288,37 +302,51 @@ function Table() {
 
         const style = {
             opacity: isDragging ? 0.8 : 1,
-            position: isPinned?"sticky":'relative',
+            position: isPinned ? "sticky" : 'relative',
             transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
             transition: 'width transform 0.2s ease-in-out',
             width: `${cell.column.getSize()}px`, // Add this to ensure pinned column width matches
             minWidth: `${cell.column.getSize()}px`, // Ensures the pinned column does not shrink
             maxWidth: `${cell.column.getSize()}px`, // Ensures the pinned column does not grow
-            zIndex: isDragging|| isPinned? 1 : 0,
+            zIndex: isDragging || isPinned ? 1 : 0,
         }
 
         return (
-            !isPinned?
-            <td key={cell.id}
-                style={{ ...getCommonPinningStyles(cell.column), ...style }}
-                className=" group-hover:bg-listhover"
-                ref={setNodeRef}
-            > 
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </td>:
-             <td key={cell.id}
-             style={{ ...getCommonPinningStyles(cell.column) }}
-             className=" group-hover:bg-listhover"
-         > 
-         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-         </td>
+            !isPinned ?
+                <td key={cell.id}
+                    style={{ ...getCommonPinningStyles(cell.column), ...style }}
+                    className=" group-hover:bg-listhover"
+                    ref={setNodeRef}
+                >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td> :
+                <td key={cell.id}
+                    style={{ ...getCommonPinningStyles(cell.column) }}
+                    className=" group-hover:bg-listhover"
+                >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
         )
     }
     // Row Component
     const DraggableTaskList = ({ row }) => {
+        const { transform, transition, setNodeRef, isDragging } = useSortable({
+            id: row.id,
+          })
+      
+          const style = {
+            transform: CSS.Transform.toString(transform), //let dnd-kit do its thing
+            transition: transition,
+            opacity: isDragging ? 0.8 : 1,
+            zIndex: isDragging ? 1 : 0,
+            position: 'relative',
+          }
         return (
             // connect row ref to dnd-kit, apply important styles
-            <tr className="  bg-mainbackgroundcolor group hover:bg-listhover "   >
+            <tr className="   bg-mainbackgroundcolor group hover:bg-listhover "  
+            ref={setNodeRef}
+            style={style}
+            >
 
                 {row.getVisibleCells().map(cell => (
                     <SortableContext
@@ -327,7 +355,7 @@ function Table() {
                         strategy={horizontalListSortingStrategy}
                     >
                         <DragAlongCell key={cell.id} cell={cell} />
-                    </SortableContext>
+                     </SortableContext>
                 ))}
             </tr>
 
@@ -336,167 +364,238 @@ function Table() {
 
 
 
-const DraggableTableHeader = ({ header }) => {
-    const isPinned = Boolean(header.column.getIsPinned());
+    const DraggableTableHeader = ({ header }) => {
+        const isPinned = Boolean(header.column.getIsPinned());
 
-    const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
-        id: header.column.id,
-        disabled: isPinned, // Disable drag-and-drop for pinned columns
-        data: {
-            type: 'header',
-        },
-    });
+        const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
+            id: header.column.id,
+            disabled: isPinned, // Disable drag-and-drop for pinned columns
+            data: {
+                type: 'header',
+            },
+        });
 
-    // Styles for the header cell
-    const style = {
-        opacity: isDragging ? 0.8 : 1,
-        position: isPinned ? 'sticky' : 'relative',
-        transform: CSS.Translate.toString(transform),
-        transition: 'width transform 0.2s ease-in-out',
-        zIndex: isDragging || isPinned ? 1 : 0,
+        // Styles for the header cell
+        const style = {
+            opacity: isDragging ? 0.8 : 1,
+            position: isPinned ? 'sticky' : 'sticky',
+            transform: CSS.Translate.toString(transform),
+            transition: 'width transform 0.2s ease-in-out',
+            zIndex: isDragging?5:3,
+            top: '0px'
+        };
+
+        return !isPinned ? (
+            <th
+                colSpan={header.colSpan}
+                style={{ ...getCommonPinningStylesForHeader(header.column), ...style }}
+                className="border border-gray-400 bg-mainbackgroundcolor"
+                ref={setNodeRef} // Attach sortable ref here
+            >
+                {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+
+                {/* Resizer */}
+                <div
+                    onDoubleClick={() => header.column.resetSize()}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className={`cursor-col-resize resizer ${header.column.getIsResizing() ? 'isResizing' : ''
+                        }`}
+                />
+                 {/* {header.column.getCanFilter() ? (
+                          <div>
+                            <Filter column={header.column} />
+                          </div>
+                        ) : null} */}
+            </th>
+        ) : (
+            <th
+                colSpan={header.colSpan}
+                style={{ ...getCommonPinningStylesForHeader(header.column) }}
+                className="border border-gray-400 bg-mainbackgroundcolor"
+            >
+                {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+
+                {/* Resizer */}
+                <div
+                    onDoubleClick={() => header.column.resetSize()}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className={`cursor-col-resize resizer ${header.column.getIsResizing() ? 'isResizing' : ''
+                        }`}
+                />
+                 {/* {
+                          <div>
+                            <Filter column={header.column} />
+                          </div>
+                    } */}
+            </th>
+        );
     };
-
-    return !isPinned ? (
-        <th
-            colSpan={header.colSpan}
-            style={{ ...getCommonPinningStyles(header.column), ...style }}
-            className="border border-gray-400 bg-mainbackgroundcolor"
-            ref={setNodeRef} // Attach sortable ref here
-        >
-            {header.isPlaceholder
-                ? null
-                : flexRender(header.column.columnDef.header, header.getContext())}
-
-            {/* Resizer */}
-            <div
-                onDoubleClick={() => header.column.resetSize()}
-                onMouseDown={header.getResizeHandler()}
-                onTouchStart={header.getResizeHandler()}
-                className={`cursor-col-resize resizer ${
-                    header.column.getIsResizing() ? 'isResizing' : ''
-                }`}
-            />
-        </th>
-    ) : (
-        <th
-            colSpan={header.colSpan}
-            style={{ ...getCommonPinningStyles(header.column) }}
-            className="border border-gray-400 bg-mainbackgroundcolor"
-        >
-            {header.isPlaceholder
-                ? null
-                : flexRender(header.column.columnDef.header, header.getContext())}
-
-            {/* Resizer */}
-            <div
-                onDoubleClick={() => header.column.resetSize()}
-                onMouseDown={header.getResizeHandler()}
-                onTouchStart={header.getResizeHandler()}
-                className={`cursor-col-resize resizer ${
-                    header.column.getIsResizing() ? 'isResizing' : ''
-                }`}
-            />
-        </th>
-    );
-};
 
 
 
     return (
-        
-         
-            <DndContext
-                collisionDetection={closestCenter}
-                // modifiers={[restrictToHorizontalAxis,restrictToVerticalAxis]}
-                onDragEnd={handleDragEnd}
-                onDragStart={handleDragstart}
-                sensors={sensors}
-            >
-                <div className="p-2 bg-mainbackgroundcolor">
-                    <div className='flex justify-center  flex-col  items-center  mt-2 '>
-                {/* <div className="w-full  text-xl font-bold flex flex-1 text-center text-green-400">
+
+
+        <DndContext
+            collisionDetection={closestCenter}
+            // modifiers={[restrictToHorizontalAxis,restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragstart}
+            sensors={sensors}
+        >
+            <div className="p-2 bg-mainbackgroundcolor">
+                <div className='flex justify-center  flex-col  items-center  mt-2 '>
+                    {/* <div className="w-full  text-xl font-bold flex flex-1 text-center text-green-400">
                     Table Formate</div> */}
-        <div className="flex sticky right-1 justify-end  w-full  text-yellow-200 space-x-4">
-          <button
-            className=" text-white text-sm bg-blue-900 rounded-md py-2 px-3 flex justify-center items-center"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <ChevronDoubleLeftIcon className="h-5 w-5" />{" "}
-            <label> Previous</label>
-          </button>
-          <span className="text-lg">
-            {" "}
-            Page {currentPage} of {totalPages}{" "}
-          </span>
-          <button
-            className=" text-white text-sm bg-blue-900 rounded-md py-2 px-3 flex justify-center items-center"
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            <label> Next</label> <ChevronDoubleRightIcon className="h-5 w-5" />
-          </button>
-        </div>
-        </div>
+                    <div className="flex sticky right-1 justify-end  w-full  text-yellow-200 space-x-4">
+                        <button
+                            className=" text-white text-sm bg-blue-900 rounded-md py-2 px-3 flex justify-center items-center"
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronDoubleLeftIcon className="h-5 w-5" />{" "}
+                            <label> Previous</label>
+                        </button>
+                        <span className="text-lg">
+                            {" "}
+                            Page {currentPage} of {totalPages}{" "}
+                        </span>
+                        <button
+                            className=" text-white text-sm bg-blue-900 rounded-md py-2 px-3 flex justify-center items-center"
+                            onClick={() =>
+                                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                            }
+                            disabled={currentPage === totalPages}
+                        >
+                            <label> Next</label> <ChevronDoubleRightIcon className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
 
 
-                    <div className="h-4" />
-                    <div className="p-2">
+                <div className="h-4" />
+                <div className="p-2">
 
-                        <div className="table-container">
-        
-                            <table
-                            // style={{
-                            //     width: table.getTotalSize(),
-                            // }}
-                            >
-                                <thead>
+                    <div className="table-container  h-[500px] overflow-y-scroll">
 
-                                    {table.getHeaderGroups().map(headerGroup => (
-                                        <tr key={headerGroup.id}>
-                                            <SortableContext
-                                                items={header}
-                                                strategy={horizontalListSortingStrategy}
-                                            >
-                                                {headerGroup.headers.map(header => (
-                                                    <DraggableTableHeader key={header.id} header={header} />
-                                                ))}
-                                            </SortableContext>
+                        <table
+                        // style={{
+                        //     width: table.getTotalSize(),
+                        // }}
+                        >
+                            <thead>
 
-                                        </tr>
-                                    ))}
+                                {table.getHeaderGroups().map(headerGroup => (
+                                    <tr key={headerGroup.id}>
+                                        <SortableContext
+                                            items={header}
+                                            strategy={horizontalListSortingStrategy}
+                                        >
+                                            {headerGroup.headers.map(header => (
+                                                <DraggableTableHeader key={header.id} header={header} />
+                                            ))}
+                                        </SortableContext>
 
-                                </thead>
-                                <tbody>
+                                    </tr>
+                                ))}
+
+                            </thead>
+                            <tbody>
 
 
-                               {data.length?
+                                {data.length ?
                                     table.getRowModel().rows.map(row => {
                                         return (
                                             <>
+                                             <SortableContext
+                                            items={rowOrder}
+                                            strategy={verticalListSortingStrategy}
+                                        >
                                                 <DraggableTaskList row={row} parentId={row.id} />
+                                                </SortableContext>
                                             </>
                                         )
-                                    }):null
-}
-                                </tbody>
-                            </table>
-                        </div>
+                                    }) : null
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </DndContext>
-          
+            </div>
+        </DndContext>
+
     )
 
 }
 
+function Filter({ column }) {
+    const columnFilterValue = column.getFilterValue()
+
+    return (<div className="flex space-x-2">
+
+        <DebouncedInput
+            className="w-36 border shadow rounded"
+            onChange={value => column.setFilterValue(value)}
+            placeholder={`Search...`}
+            type="text"
+            value={(columnFilterValue ?? '')}
+        />
+    </div>)
+}
 
 
 
+
+function DebouncedInput({
+  value: initialValue,
+  onChange,
+  debounce = 500,
+  ...props
+}) {
+  const [value, setValue] = useState(initialValue);
+
+  // Effect to update local value whenever initialValue changes
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
+
+  // Effect to handle debounced onChange
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+     // onChange(value); // Only call onChange when the value stops changing for `debounce` ms
+    }, debounce);
+
+    // Cleanup timeout on value change or unmount
+    return () => clearTimeout(timeout);
+  }, [value, debounce, onChange]);
+
+  // Handle input change and update local value
+  const handleChange = (e) => {
+    setValue(e.target.value); // Update local state immediately for user interaction
+  };
+
+  return (
+    <input
+      {...props}
+      value={value}
+      onChange={handleChange}
+    />
+  );
+}
+
+
+  
 
 export default Table;
+
+
+
 
 
 

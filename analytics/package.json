@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@dnd-kit/sortable": "^8.0.0",
+    "@faker-js/faker": "^9.2.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.3.0",
